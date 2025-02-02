@@ -1,0 +1,115 @@
+from tkinter import *
+import tkinter as tk
+from tkinter import messagebox, scrolledtext
+import requests
+import webbrowser
+
+# Liste des modèles d'URL des profils de réseaux sociaux
+url_réseaux_sociaux = [
+    "https://www.facebook.com/{}",
+    "https://www.twitter.com/{}",
+    "https://www.instagram.com/{}",
+    "https://www.linkedin.com/in/{}",
+    "https://www.github.com/{}",
+    "https://www.tiktok.com/@{}",
+    "https://www.snapchat.com/add/{}",
+    "https://www.youtube.com/{}",
+    "https://www.reddit.com/user/{}"
+]
+
+# Fonction pour vérifier les profils sur les réseaux sociaux
+def verification(pseudo):
+    results_text.delete(1.0, tk.END)  # Efface les résultats précédents
+    for url in url_réseaux_sociaux:
+        profile_url = url.format(pseudo)
+        try:
+            response = requests.get(profile_url)
+            if response.status_code == 200:
+                results_text.insert(tk.END, f"Profil trouvé : {profile_url}\n", "found")
+            else:
+                results_text.insert(tk.END, f"Pas de profil trouvé pour : {profile_url}\n", "not_found")
+        except requests.RequestException:
+            results_text.insert(tk.END, f"Erreur lors de l'accès à {profile_url}\n", "error")
+
+# Fonction pour effectuer une recherche Google Dork
+def google_dorking(pseudo):
+    # Liste de requêtes Google Dork pour rechercher des informations par pseudo
+    dork_queries = [
+        f'site:facebook.com "{pseudo}"',
+        f'site:twitter.com "{pseudo}"',
+        f'site:instagram.com "{pseudo}"',
+        f'site:linkedin.com "{pseudo}"',
+        f'site:github.com "{pseudo}"',
+        f'site:reddit.com "{pseudo}"',
+        f'site:tiktok.com"{pseudo}"',
+        f'filetype:pdf"{pseudo}"',
+        f'site:annuaire.com"{pseudo}"',
+        f'site:pagesjaunes.fr"{pseudo}"',
+        f'inurl:forum"{pseudo}"',
+        f'inurl:blog"{pseudo}"',
+        f'@gmail.com"{pseudo}"',
+        f'site:archive.org"{pseudo}"',
+        f'adresse"{pseudo}"',
+        f'"{pseudo}" intitle:"profile"'
+    ]
+    
+    results_text.insert(tk.END, "\nRésultats Google Dorking:\n", "header")
+    for query in dork_queries:
+        google_search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
+        results_text.insert(tk.END, f"Recherche : {query}\nLien : {google_search_url}\n", "dork")
+
+# Fonction déclenchée par le bouton
+def rechercher():
+    pseudo = entry_pseudo.get().strip()
+    if pseudo:
+        verification(pseudo)
+        google_dorking(pseudo)
+    else:
+        messagebox.showwarning("Attention", "Veuillez entrer un pseudo.")
+
+# Création de la fenêtre principale
+window = Tk()
+window.title("OSINT Tool")
+window.geometry("600x700")
+window.minsize(600, 700)
+window.config(background='#121212')  # Background sombre
+#logo
+
+
+# Création de la frame
+frame = Frame(window, bg='#121212')
+frame.pack(expand=YES)
+
+# Titre principal
+label_title = Label(frame, text="H.A.M.", font=("Courier", 36, "bold"), bg="#121212", fg='#F0A500')
+label_title.pack(pady=10)
+
+# Sous-titre
+label_subtitle = Label(frame, text="Rien n'est un secret pour nous", font=("Courier", 12), bg="#121212", fg='#BBBBBB')
+label_subtitle.pack()
+
+# Barre de recherche
+label_pseudo = tk.Label(frame, text='Victim username', font=("Courier", 14), bg="#121212", fg="#BBBBBB")
+label_pseudo.pack(pady=15)
+
+entry_pseudo = tk.Entry(frame, font=("Courier", 12), fg="#F0A500", bg="#1F1F1F", bd=2, relief="groove")
+entry_pseudo.pack(pady=5)
+
+# Bouton pour lancer la recherche
+btn_rechercher = tk.Button(frame, text="Rechercher", command=rechercher, bg="#F0A500", fg="#121212", font=("Courier", 12), relief="ridge", cursor="hand2")
+btn_rechercher.pack(pady=20)
+
+# Zone de texte défilante pour afficher les résultats
+results_text = scrolledtext.ScrolledText(window, width=70, height=20, bg="#1F1F1F", fg="#EEEEEE", font=("Courier", 10), bd=3, wrap=WORD, relief="sunken")
+results_text.pack(pady=20)
+
+# Personnalisation des tags pour le texte
+results_text.tag_configure("header", foreground="#F0A500", font=("Courier", 12, "bold"))
+results_text.tag_configure("found", foreground="#37FF8B", font=("Courier", 10))
+results_text.tag_configure("not_found", foreground="#FF5733", font=("Courier", 10))
+results_text.tag_configure("error", foreground="#FF3333", font=("Courier", 10, "italic"))
+results_text.tag_configure("dork", foreground="#BBBBBB", font=("Courier", 10))
+
+# Afficher la fenêtre
+window.mainloop()
+
